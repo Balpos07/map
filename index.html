@@ -285,8 +285,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // API Key for OpenWeatherMap (replace with your actual API key)
-            const apiKey = '1b5ee9a8582a451f9e85f424ce825497';
+            const apiKey = 'b50dd7b88727df4568e1904f50e71b15';
             
             // DOM Elements
             const cityInput = document.getElementById('cityInput');
@@ -346,22 +345,33 @@
                 errorMessageEl.style.display = 'none';
                 
                 // API URL
-                const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+                const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
+                
+                console.log("Fetching weather for:", city);
+                console.log("API URL (without key):", url.replace(apiKey, "API_KEY_HIDDEN"));
                 
                 // Fetch data
                 fetch(url)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('City not found');
+                            if (response.status === 401) {
+                                throw new Error('API key error: Invalid API key or not yet activated');
+                            } else if (response.status === 404) {
+                                throw new Error(`City "${city}" not found. Try adding country code like "London,UK"`);
+                            } else {
+                                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                            }
                         }
                         return response.json();
                     })
                     .then(data => {
+                        console.log("Weather data received:", data);
                         updateWeatherUI(data);
                         loadingEl.style.display = 'none';
                         weatherInfoEl.style.opacity = '1';
                     })
                     .catch(error => {
+                        console.error("Weather API error:", error);
                         loadingEl.style.display = 'none';
                         weatherInfoEl.style.opacity = '1';
                         showError(error.message);
